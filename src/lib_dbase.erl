@@ -46,7 +46,7 @@ dynamic_install_start(IntialNode)->
 %% --------------------------------------------------------------------
 dynamic_install([],_IntialNode)->
     ok;
-dynamic_install([NodeToAdd|T],IntialNode)->
+dynamic_install([{_,NodeToAdd}|T],IntialNode)->
     stopped=rpc:call(NodeToAdd,mnesia,stop,[]),
     {aborted,{node_not_running,NodeToAdd}}=rpc:call(NodeToAdd,mnesia,del_table_copy,[schema,IntialNode]),
     ok=rpc:call(NodeToAdd,mnesia,delete_schema,[[NodeToAdd]]),
