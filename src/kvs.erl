@@ -324,7 +324,7 @@ handle_info(timeout, State) ->
 	    ok=lib_dbase:dynamic_db_init([]),
 	    ok=lib_kvs:create_table();
 	KvsNodes->
-	    ok=lib_dbase:dynamic_db_init(KvsNodes)
+	    ok=lib_dbase:dynamic_db_init([node()|KvsNodes])
     end,
 	    
     ?LOG_NOTICE("Server started ",[?MODULE]),
