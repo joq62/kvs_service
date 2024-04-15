@@ -27,7 +27,8 @@
 	 create/2,
 	 read/1,
 	 update/2,
-	 delete/1
+	 delete/1,
+	 get_all/0
 	]).
 
 %% OaM 
@@ -95,6 +96,14 @@ update(Key,NewValue)->
 -spec delete(Key :: atom()) -> ok | Error::term().
 delete(Key)-> 
     gen_server:call(?SERVER, {delete,Key},infinity).
+%%--------------------------------------------------------------------
+%% @doc
+%% 
+%% @end
+%%--------------------------------------------------------------------
+-spec get_all() -> KeyValues::term() | Error::term().
+get_all()-> 
+    gen_server:call(?SERVER, {get_all},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -180,6 +189,45 @@ handle_call({create,Key,Value}, _From, State) ->
 		  ErrorEvent
 	  end,
     {reply, Reply, State};
+handle_call({update,Key,NewValue}, _From, State) ->
+  %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
+    Result=try lib_kvs:update(Key,NewValue) of
+	       ok->
+		   ok;
+	       {error,Reason}->
+		   {error,Reason}
+	   catch
+	       Event:Reason:Stacktrace ->
+		   {Event,Reason,Stacktrace,?MODULE,?LINE}
+	   end,
+    Reply=case Result of
+	      ok->
+		  ok;
+	      ErrorEvent->
+		  ?LOG_WARNING("Failed to create ",[Key,NewValue,ErrorEvent]),
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+handle_call({delete,Key}, _From, State) ->
+  %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
+    Result=try lib_kvs:delete(Key) of
+	       ok->
+		   ok;
+	       {error,Reason}->
+		   {error,Reason}
+	   catch
+	       Event:Reason:Stacktrace ->
+		   {Event,Reason,Stacktrace,?MODULE,?LINE}
+	   end,
+    Reply=case Result of
+	      ok->
+		  ok;
+	      ErrorEvent->
+		  ?LOG_WARNING("Failed to do read",[Key,ErrorEvent]),
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+
 handle_call({read,Key}, _From, State) ->
   %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
     Result=try lib_kvs:read(Key) of
@@ -196,6 +244,26 @@ handle_call({read,Key}, _From, State) ->
 		  {ok,Value};
 	      ErrorEvent->
 		  ?LOG_WARNING("Failed to do read",[Key,ErrorEvent]),
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+
+handle_call({get_all}, _From, State) ->
+  %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
+    Result=try lib_kvs:get_all() of
+	       {ok,R}->
+		   {ok,R};
+	       {error,Reason}->
+		   {error,Reason}
+	   catch
+	       Event:Reason:Stacktrace ->
+		   {Event,Reason,Stacktrace,?MODULE,?LINE}
+	   end,
+    Reply=case Result of
+	      {ok,KeyValues}->
+		  {ok,KeyValues};
+	      ErrorEvent->
+		  ?LOG_WARNING("Failed to get_all",[ErrorEvent]),
 		  ErrorEvent
 	  end,
     {reply, Reply, State};
@@ -251,12 +319,12 @@ handle_info(timeout, State) ->
     rd:trade_resources(),
     timer:sleep(2000),
 
-    KvsNodes=rd:fetch_resources(kvs),
-    case lib_dbase:dynamic_db_init(KvsNodes) of
-	ok->
-	    ok;
-	Error->
-	    ?LOG_WARNING("Failed to dynamic_db_init on nodes ",[Error,KvsNodes])
+    case rd:fetch_resources(kvs) of
+	[]->
+	    ok=lib_dbase:dynamic_db_init([]),
+	    ok=lib_kvs:create_table();
+	KvsNodes->
+	    ok=lib_dbase:dynamic_db_init(KvsNodes)
     end,
 	    
     ?LOG_NOTICE("Server started ",[?MODULE]),
