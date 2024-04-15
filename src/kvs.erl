@@ -319,12 +319,13 @@ handle_info(timeout, State) ->
     rd:trade_resources(),
     timer:sleep(2000),
     KvsNodes=lists:delete(node(),rd:fetch_resources(kvs)),
+    ?LOG_NOTICE(" kvs nodes",[KvsNodes]),
     case KvsNodes  of
 	[]->
-	    ok=lib_dbase:dynamic_db_init([]),
+	    ok=lib_dbase:dynamic_install_start(node()),
 	    ok=lib_kvs:create_table();
 	KvsNodes->
-	    ok=lib_dbase:dynamic_db_init(KvsNodes)
+	    ok=lib_dbase:dynamic_install(KvsNodes,node())
     end,
 	    
     ?LOG_NOTICE("Server started connecting to kvs nodes",[?MODULE,KvsNodes]),
