@@ -318,16 +318,16 @@ handle_info(timeout, State) ->
     [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
     rd:trade_resources(),
     timer:sleep(2000),
-
-    case rd:fetch_resources(kvs) of
+    KvsNodes=rd:fetch_resources(kvs),
+    case KvsNodes  of
 	[]->
 	    ok=lib_dbase:dynamic_db_init([]),
 	    ok=lib_kvs:create_table();
 	KvsNodes->
-	    ok=lib_dbase:dynamic_db_init([node()|KvsNodes])
+	    ok=lib_dbase:dynamic_db_init(KvsNodes)
     end,
 	    
-    ?LOG_NOTICE("Server started ",[?MODULE]),
+    ?LOG_NOTICE("Server started connecting to kvs nodes",[?MODULE,KvsNodes]),
     {noreply, State};
 
 
