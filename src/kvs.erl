@@ -23,7 +23,11 @@
 
 %% API
 -export([
-	 glurk/1
+	 %% CRUD
+	 create/2,
+	 read/1,
+	 update/2,
+	 delete/1
 	]).
 
 %% OaM 
@@ -61,9 +65,36 @@
 %% 
 %% @end
 %%--------------------------------------------------------------------
--spec glurk(Glurk :: term()) -> Result::term() | Error::term().
-glurk(Glurk)-> 
-    gen_server:call(?SERVER, {glurk,Glurk},infinity).
+-spec create(Key :: atom(),Value :: term()) -> ok | Error::term().
+create(Key,Value)-> 
+    gen_server:call(?SERVER, {create,Key,Value},infinity).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% 
+%% @end
+%%--------------------------------------------------------------------
+-spec read(Key :: atom()) -> {ok,Value ::term()} | Error::term().
+read(Key)-> 
+    gen_server:call(?SERVER, {read,Key},infinity).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% 
+%% @end
+%%--------------------------------------------------------------------
+-spec update(Key :: atom(),NewValue :: term()) -> ok | Error::term().
+update(Key,NewValue)-> 
+    gen_server:call(?SERVER, {update,Key,NewValue},infinity).
+
+%%--------------------------------------------------------------------
+%% @doc
+%% 
+%% @end
+%%--------------------------------------------------------------------
+-spec delete(Key :: atom()) -> ok | Error::term().
+delete(Key)-> 
+    gen_server:call(?SERVER, {delete,Key},infinity).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -130,9 +161,28 @@ init([]) ->
 	  {stop, Reason :: term(), NewState :: term()}.
 
 
-handle_call({glurk,Glurk}, _From, State) ->
+handle_call({create,Key,Value}, _From, State) ->
   %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
-    Result=try lib_x:glurk(Glurk) of
+    Result=try lib_kvs:create(Key,Value) of
+	       ok->
+		   ok;
+	       {error,Reason}->
+		   {error,Reason}
+	   catch
+	       Event:Reason:Stacktrace ->
+		   {Event,Reason,Stacktrace,?MODULE,?LINE}
+	   end,
+    Reply=case Result of
+	      ok->
+		  ok;
+	      ErrorEvent->
+		  ?LOG_WARNING("Failed to create ",[Key,Value,ErrorEvent]),
+		  ErrorEvent
+	  end,
+    {reply, Reply, State};
+handle_call({read,Key}, _From, State) ->
+  %  io:format(" ~p~n",[{?FUNCTION_NAME,?MODULE,?LINE}]),
+    Result=try lib_kvs:read(Key) of
 	       {ok,R}->
 		   {ok,R};
 	       {error,Reason}->
@@ -142,11 +192,10 @@ handle_call({glurk,Glurk}, _From, State) ->
 		   {Event,Reason,Stacktrace,?MODULE,?LINE}
 	   end,
     Reply=case Result of
-	      {ok,GlurkResult}->
-		 
-		  {ok,GlurkResult};
+	      {ok,Value}->
+		  {ok,Value};
 	      ErrorEvent->
-		  ?LOG_WARNING("Failed to do glurk",[Glurk,ErrorEvent]),
+		  ?LOG_WARNING("Failed to do read",[Key,ErrorEvent]),
 		  ErrorEvent
 	  end,
     {reply, Reply, State};
@@ -201,7 +250,15 @@ handle_info(timeout, State) ->
     [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
     rd:trade_resources(),
     timer:sleep(2000),
-    
+
+    KvsNodes=rd:fetch_resources(kvs),
+    case lib_dbase:dynamic_db_init(KvsNodes) of
+	ok->
+	    ok;
+	Error->
+	    ?LOG_WARNING("Failed to dynamic_db_init on nodes ",[Error,KvsNodes])
+    end,
+	    
     ?LOG_NOTICE("Server started ",[?MODULE]),
     {noreply, State};
 

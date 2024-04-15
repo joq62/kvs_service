@@ -4,7 +4,7 @@ all:
 	#INFO: Deleting crash reports
 	rm -rf erl_cra* rebar3_crashreport_GLURK;
 	#INFO: Deleting euinit test applications dirs
-	rm -rf log resource_discovery etcd;
+	rm -rf Mnesia* log resource_discovery etcd;
 	rm -rf inventory;
 	rm -rf host_specs catalog application_dir deployment_specs deployment_specs_test catalog_specs_test catalog_specs;
 	rm -rf doc;
@@ -39,7 +39,7 @@ build:
 	#INFO: Deleting crash reports
 	rm -rf erl_cra* rebar3_crashreport_GLURK;
 	#INFO: Deleting euinit test applications dirs
-	rm -rf log resource_discovery etcd;
+	rm -rf Mnesia* log resource_discovery etcd;
 	rm -rf inventory;
 	rm -rf host_specs catalog application_dir deployment_specs_test deployment_specs catalog_specs_test catalog_specs;
 	rm -rf doc;
@@ -68,7 +68,7 @@ clean:
 	#INFO: Deleting crash reports
 	rm -rf erl_cra* rebar3_crashreport_*;
 	#INFO: Deleting euinit test applications dirs
-	rm -rf log resource_discovery etcd;
+	rm -rf Mnesia* log resource_discovery etcd;
 	rm -rf inventory;
 	rm -rf catalog host_specs application_dir deployment_specs_test deployment_specs catalog_specs_test catalog_specs;
 	rm -rf test_ebin;
@@ -91,7 +91,7 @@ eunit:
 	#INFO: Deleting crash reports
 	rm -rf erl_cra* rebar3_crashreport_GLURK;
 	#INFO: Deleting euinit test applications dirs
-	rm -rf log resource_discovery etcd;
+	rm -rf Mnesia* log resource_discovery etcd;
 	rm -rf inventory;
 	rm -rf host_specs  catalog application_dir deployment_specs_test deployment_specs catalog_specs_test catalog_specs;
 	rm -rf doc;

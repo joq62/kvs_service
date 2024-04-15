@@ -27,11 +27,11 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
     
     ok=setup(),
-   
+    ok=normal_test(),
  
     io:format("Test OK !!! ~p~n",[?MODULE]),
-    timer:sleep(1000),
-    init:stop(),
+   % timer:sleep(1000),
+   % init:stop(),
     ok.
 
 
@@ -40,6 +40,27 @@ start()->
 %% 
 %% @end
 %%--------------------------------------------------------------------
+normal_test()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
+
+    io:format("mnesia system_info ~p~n",[{mnesia:system_info(),?MODULE,?FUNCTION_NAME,?LINE}]),
+    ok=kvs:create(key1,value1),
+    {ok,value1}=kvs:read(key1),
+    {ok,value1}=kvs:read(glurk),
+    
+    ok=kvs:update(key1,value11),
+    ok=kvs:update(glurk,value11),
+    
+    {ok,value11}=kvs:read(key1),
+    {ok,value1}=kvs:read(glurk),
+    
+    ok=kvs:delete(key1),
+    {ok,value1}=kvs:delete(glurk),
+    
+    {ok,value11}=kvs:read(key1),
+    
+    ok.
+    
 
 
 %% --------------------------------------------------------------------
