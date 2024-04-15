@@ -318,7 +318,7 @@ handle_info(timeout, State) ->
     [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
     rd:trade_resources(),
     timer:sleep(2000),
-    KvsNodes=rd:fetch_resources(kvs),
+    KvsNodes=lists:delete(node(),rd:fetch_resources(kvs)),
     case KvsNodes  of
 	[]->
 	    ok=lib_dbase:dynamic_db_init([]),
