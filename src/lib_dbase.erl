@@ -120,7 +120,7 @@ dynamic_db_init([DbaseNode|T])->
     mnesia:del_table_copy(schema,node()),
     mnesia:delete_schema([node()]),
     mnesia:start(),
-    ok=lib_kvs:create_table(),
+ %   ok=lib_kvs:create_table(),
 %io:format("DbaseNode dynamic_db_init([DbaseNode|T]) ~p~n",[{DbaseNode,node(),?FUNCTION_NAME,?MODULE,?LINE}]),
     StorageType=ram_copies,
   %  case rpc:call(DbaseNode,mnesia,change_config,[extra_db_nodes, [node()]],5000) of
@@ -132,9 +132,9 @@ dynamic_db_init([DbaseNode|T])->
 	    mnesia:wait_for_tables(Tables,20*1000),
 	    ok;
 	_Reason ->
-	    ok
-    end,
-    dynamic_db_init(T).
+	    dynamic_db_init(T)
+    end.
+
 
 
 
