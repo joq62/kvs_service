@@ -15,8 +15,8 @@
 %% External exports
 -export([get_nodenames/0,
 	 get_nodes/0,
-	start_slave/1,
-	start_nodes/0
+	 start_slave/1,
+	 start_nodes/0
 	]). 
 
 

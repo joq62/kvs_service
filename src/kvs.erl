@@ -314,18 +314,23 @@ handle_info({nodedown,Node}, State) ->
 
 handle_info(timeout, State) ->
     
+    file:make_dir(?MainLogDir),
+    [NodeName,_HostName]=string:tokens(atom_to_list(node()),"@"),
+    NodeNodeLogDir=filename:join(?MainLogDir,NodeName),
+    ok=log:create_logger(NodeNodeLogDir,?LocalLogDir,?LogFile,?MaxNumFiles,?MaxNumBytes),
+    
     [rd:add_local_resource(ResourceType,Resource)||{ResourceType,Resource}<-?LocalResourceTuples],
     [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
     rd:trade_resources(),
     timer:sleep(2000),
-    KvsNodes=lists:delete(node(),rd:fetch_resources(kvs)),
-    ?LOG_NOTICE(" kvs nodes",[KvsNodes]),
+    KvsNodes=lists:delete(node(),rd:fetch_nodes(kvs)),
+    ?LOG_NOTICE(" kvs nodes",[node(),KvsNodes]),
     case KvsNodes  of
 	[]->
-	    ok=lib_dbase:dynamic_install_start(node()),
+	    ok=lib_dbase:dynamic_db_init([]),
 	    ok=lib_kvs:create_table();
 	KvsNodes->
-	    ok=lib_dbase:dynamic_install(KvsNodes,node())
+	    ok=lib_dbase:dynamic_db_init(KvsNodes)
     end,
 	    
     ?LOG_NOTICE("Server started connecting to kvs nodes",[?MODULE,KvsNodes]),
