@@ -314,17 +314,7 @@ handle_cast(UnMatchedSignal, State) ->
 
 
 handle_info(timeout, State) ->
-    
-    %% assume that logs dir exists and log is started
-    [NodeName,_HostName]=string:tokens(atom_to_list(node()),"@"),
-    NodeNodeLogDir=filename:join(?MainLogDir,NodeName),
-    case log:create_logger(NodeNodeLogDir,?LocalLogDir,?LogFile,?MaxNumFiles,?MaxNumBytes) of
-	ok->
-	    ok;
-	Err-> 
-	    ?LOG2_NOTICE("Failed to create logger ",[Err])
-    end,	  
-   
+      
     [rd:add_local_resource(ResourceType,Resource)||{ResourceType,Resource}<-?LocalResourceTuples],
     [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
     rd:trade_resources(),
