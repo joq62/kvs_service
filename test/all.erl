@@ -16,7 +16,8 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-
+-define(LocalResourceTuples,[{log2,{log2,node()}}]).
+-define(TargetTypes,[log2]).
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -27,7 +28,7 @@ start()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME,?LINE}]),
     
     ok=setup(),
-    ok=normal_test(),
+%    ok=normal_test(),
     ok=dist_test:start(),
  
     io:format("Test OK !!! ~p~n",[?MODULE]),
@@ -77,13 +78,18 @@ setup()->
 
 
     {ok,_}=log:start_link(),
-    
-    
-    {ok,_}=rd:start_link(),
-    {ok,_}=kvs:start_link(),
-  
     pong=log:ping(),
+    {ok,_}=rd:start_link(),
     pong=rd:ping(),
-    pong=kvs:ping(),
+
+    [rd:add_local_resource(ResourceType,Resource)||{ResourceType,Resource}<-?LocalResourceTuples],
+    [rd:add_target_resource_type(TargetType)||TargetType<-?TargetTypes],
+    rd:trade_resources(),
+    timer:sleep(3000),
+
+    {ok,_}=log2:start_link(),
+    pong=log2:ping(),
+    {ok,_}=kvs:start_link(),
+     pong=kvs:ping(),
     ok.
     

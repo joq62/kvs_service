@@ -123,6 +123,10 @@ eunit:
 	 -I /home/joq62/erlang/include\
 	 -I ../rd_service/include\
 	 -o test_ebin ../rd_service/src/*.erl;
+	erlc -I include\
+	 -I /home/joq62/erlang/include\
+	 -I ../log2_service/include\
+	 -o test_ebin ../log2_service/src/*.erl;
 	#INFO: Creating Common applications needed for testing
 	#INFO: Compile application
 	mkdir ebin;		

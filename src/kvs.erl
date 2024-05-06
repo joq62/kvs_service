@@ -185,6 +185,7 @@ handle_call({create,Key,Value}, _From, State) ->
 	      ok->
 		  ok;
 	      ErrorEvent->
+		  ?LOG2_WARNING("Failed to create ",[Key,Value,ErrorEvent]),
 		  ?LOG_WARNING("Failed to create ",[Key,Value,ErrorEvent]),
 		  ErrorEvent
 	  end,
@@ -204,6 +205,7 @@ handle_call({update,Key,NewValue}, _From, State) ->
 	      ok->
 		  ok;
 	      ErrorEvent->
+		  ?LOG2_WARNING("Failed to create ",[Key,NewValue,ErrorEvent]),
 		  ?LOG_WARNING("Failed to create ",[Key,NewValue,ErrorEvent]),
 		  ErrorEvent
 	  end,
@@ -223,6 +225,7 @@ handle_call({delete,Key}, _From, State) ->
 	      ok->
 		  ok;
 	      ErrorEvent->
+		  ?LOG2_WARNING("Failed to do read",[Key,ErrorEvent]),
 		  ?LOG_WARNING("Failed to do read",[Key,ErrorEvent]),
 		  ErrorEvent
 	  end,
@@ -243,6 +246,7 @@ handle_call({read,Key}, _From, State) ->
 	      {ok,Value}->
 		  {ok,Value};
 	      ErrorEvent->
+		  ?LOG2_WARNING("Failed to do read",[Key,ErrorEvent]),
 		  ?LOG_WARNING("Failed to do read",[Key,ErrorEvent]),
 		  ErrorEvent
 	  end,
@@ -263,6 +267,7 @@ handle_call({get_all}, _From, State) ->
 	      {ok,KeyValues}->
 		  {ok,KeyValues};
 	      ErrorEvent->
+		  ?LOG2_WARNING("Failed to get_all",[ErrorEvent]),
 		  ?LOG_WARNING("Failed to get_all",[ErrorEvent]),
 		  ErrorEvent
 	  end,
@@ -290,6 +295,7 @@ handle_cast({stop}, State) ->
     {stop,normal,ok,State};
 
 handle_cast(UnMatchedSignal, State) ->
+    ?LOG2_WARNING("Unmatched signal",[UnMatchedSignal]),
     ?LOG_WARNING("unmatched signal ",[UnMatchedSignal]),
     io:format("unmatched_signal ~p~n",[{UnMatchedSignal,?MODULE,?LINE}]),
     {noreply, State}.
@@ -306,15 +312,10 @@ handle_cast(UnMatchedSignal, State) ->
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: normal | term(), NewState :: term()}.
 
-handle_info({nodedown,Node}, State) ->
-    ?LOG_WARNING("nodedown,Node ",[Node]),
-    
-    {noreply, State};
-
 
 handle_info(timeout, State) ->
     
-    file:make_dir(?MainLogDir),
+    %% assume that logs dir exists and log is started
     [NodeName,_HostName]=string:tokens(atom_to_list(node()),"@"),
     NodeNodeLogDir=filename:join(?MainLogDir,NodeName),
     ok=log:create_logger(NodeNodeLogDir,?LocalLogDir,?LogFile,?MaxNumFiles,?MaxNumBytes),
@@ -324,7 +325,6 @@ handle_info(timeout, State) ->
     rd:trade_resources(),
     timer:sleep(2000),
     KvsNodes=lists:delete(node(),rd:fetch_nodes(kvs)),
-    ?LOG_NOTICE(" kvs nodes",[node(),KvsNodes]),
     case KvsNodes  of
 	[]->
 	    ok=lib_dbase:dynamic_db_init([]),
@@ -332,12 +332,13 @@ handle_info(timeout, State) ->
 	KvsNodes->
 	    ok=lib_dbase:dynamic_db_init(KvsNodes)
     end,
-	    
+    ?LOG2_NOTICE("Server started connecting to kvs nodes",[?MODULE,KvsNodes]),	    
     ?LOG_NOTICE("Server started connecting to kvs nodes",[?MODULE,KvsNodes]),
     {noreply, State};
 
 
 handle_info(Info, State) ->
+    ?LOG2_WARNING("Unmatched signal",[Info]),
     ?LOG_WARNING("unmatched signal ",[Info]),
     io:format("unmatched_signal ~p~n",[{Info,?MODULE,?LINE}]),
     {noreply, State}.
